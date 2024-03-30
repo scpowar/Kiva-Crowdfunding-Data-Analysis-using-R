@@ -2,11 +2,12 @@
 # Data Set: Kiva Crowd funding 
 # Data Set Link: https://www.kaggle.com/datasets/kiva/data-science-for-good-kiva-crowdfunding
 
-# Load Libraries
+# Required Libraries
+
 library(tidyverse)
-install.packages("leaflet")
+#install.packages("leaflet")
 library(leaflet)
-install.packages("DT")
+#install.packages("DT")
 library(DT)
 
 ##Entry 1: Creating a dynamic path to read all the data files
@@ -14,18 +15,22 @@ library(DT)
 
 folder_name <- 'D:/NUIG BA/MS5130_Applied Analytics_R/R_A3/data/'
 
-# Read data
+# Load data
+
 loans <- read_csv(file = paste0(folder_name,"kiva_loans.csv"))
 regions <- read_csv(file = paste0(folder_name,"kiva_mpi_region_locations.csv"))
 themes <- read_csv(file = paste0(folder_name,"loan_theme_ids.csv"))
 themes_region <- read_csv(file = paste0(folder_name,"loan_themes_by_region.csv"))
 
+# Data Exploration
+
+# summary(loans)
+# head(loans)
+# str(loans)
+
 glimpse(loans)
-
 glimpse(regions)
-
 glimpse(themes)
-
 glimpse(themes_region)
 
 # Most Popular Sectors
