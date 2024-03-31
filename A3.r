@@ -53,6 +53,9 @@ str(merged_data)
 # Shape of merged data
 dim(merged_data)
 
+# Handling missing data
+merged_data <- merged_data[complete.cases(merged_data),]
+
 str(merged_data)
 
 # Most Popular Sectors
