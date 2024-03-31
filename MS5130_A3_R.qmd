@@ -11,6 +11,7 @@ editor: visual
 
 ```{r}
 #| label: load libraries
+#| warning: false
 #| echo: true
 #| results: hide
 library(tidyverse)
@@ -25,6 +26,7 @@ When you click the **Render** button a document will be generated that includes 
 
 ```{r}
 #| label: load data
+#| warning: false
 #| echo: true
 #| results: hide
 folder_name <- 'D:/NUIG BA/MS5130_Applied Analytics_R/R_A3/data/'
@@ -39,9 +41,65 @@ loan_themes_by_region  <- read_csv(file = paste0(folder_name,"loan_themes_by_reg
 
 ## Data Exploration
 
+For all 4 dataset's, we check the datatype of each column using `str()`, view the data snippet using `head()` and shape of the data using `dim()` function.
+
+### Kiva Loans Data
+
 ```{r}
 #| label: Kiva Loans Data
+# To check the data type of each column
 str(kiva_loans) 
+# To view the data snippet
 kable(head(kiva_loans,3), "html") %>% 
   kable_styling(bootstrap_options = c("striped", "hover"))
+#To get the shape of data
+dim(kiva_loans)
 ```
+
+### Kiva MPI Region Locations
+
+```{r}
+#| label: Kiva MPI Region Locations
+# To check the data type of each column
+str(kiva_mpi_region_locations) 
+# To view the data snippet
+kable(head(kiva_mpi_region_locations,3), "html") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+#To get the shape of data
+dim(kiva_mpi_region_locations)
+```
+
+### Loan Themes
+
+```{r}
+#| label: Loan Themes
+# To check the data type of each column
+str(loan_themes) 
+# To view the data snippet
+kable(head(loan_themes,3), "html") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+dim(loan_themes)
+```
+
+### Loan Themes by Region
+
+```{r}
+#| label: Loan Themes by Region
+# To check the data type of each column
+str(loan_themes_by_region) 
+# To view the data snippet
+kable(head(loan_themes_by_region,3), "html") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+dim(loan_themes_by_region)
+```
+
+Renaming the `sector` column in `loan_themes_by_region` data frame to `loan_theme_sector` because we have `sector` column with a different meaning in `kiva_loans` data frame.
+
+```{r}
+loan_themes_by_region <- loan_themes_by_region %>%
+  rename(
+    loan_theme_sector = sector
+  )
+```
+
+## Merge Datasets
