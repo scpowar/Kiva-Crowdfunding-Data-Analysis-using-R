@@ -1,0 +1,47 @@
+---
+title: "Kiva Crowdfunding"
+author: "Shraddha Powar"
+format:
+  html:
+    toc: true
+editor: visual
+---
+
+## Required Libraries
+
+```{r}
+#| label: load libraries
+#| echo: true
+#| results: hide
+library(tidyverse)
+library(leaflet)
+library(DT)
+library(kableExtra)
+```
+
+## Loading the dataset
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+#| label: load data
+#| echo: true
+#| results: hide
+folder_name <- 'D:/NUIG BA/MS5130_Applied Analytics_R/R_A3/data/'
+
+# Load data
+kiva_loans <- read_csv(file = paste0(folder_name,"kiva_loans.csv"))
+kiva_mpi_region_locations <- read_csv(file = paste0(folder_name,"kiva_mpi_region_locations.csv"))
+loan_themes <- read_csv(file = paste0(folder_name,"loan_theme_ids.csv"))
+loan_themes_by_region  <- read_csv(file = paste0(folder_name,"loan_themes_by_region.csv"))
+
+```
+
+## Data Exploration
+
+```{r}
+#| label: Kiva Loans Data
+str(kiva_loans) 
+kable(head(kiva_loans,3), "html") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
