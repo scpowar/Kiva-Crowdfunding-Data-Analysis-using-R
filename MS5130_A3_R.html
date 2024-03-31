@@ -90,9 +90,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#kiva-loans-data" id="toc-kiva-loans-data" class="nav-link" data-scroll-target="#kiva-loans-data">Kiva Loans Data</a></li>
   <li><a href="#kiva-mpi-region-locations" id="toc-kiva-mpi-region-locations" class="nav-link" data-scroll-target="#kiva-mpi-region-locations">Kiva MPI Region Locations</a></li>
   <li><a href="#loan-themes" id="toc-loan-themes" class="nav-link" data-scroll-target="#loan-themes">Loan Themes</a></li>
-  <li><a href="#loan-themes-by-region" id="toc-loan-themes-by-region" class="nav-link" data-scroll-target="#loan-themes-by-region">Loan Themes by Region</a></li>
   </ul></li>
-  <li><a href="#merge-datasets" id="toc-merge-datasets" class="nav-link" data-scroll-target="#merge-datasets">Merge Datasets</a></li>
+  <li><a href="#merge-datasets" id="toc-merge-datasets" class="nav-link" data-scroll-target="#merge-datasets">Merge Datasets</a>
+  <ul class="collapse">
+  <li><a href="#explore-merged-data" id="toc-explore-merged-data" class="nav-link" data-scroll-target="#explore-merged-data">Explore Merged Data</a></li>
+  </ul></li>
+  <li><a href="#handling-missing-values" id="toc-handling-missing-values" class="nav-link" data-scroll-target="#handling-missing-values">Handling Missing Values</a></li>
   </ul>
 </nav>
 </div>
@@ -139,8 +142,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>kiva_loans <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="at">file =</span> <span class="fu">paste0</span>(folder_name,<span class="st">"kiva_loans.csv"</span>))</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>kiva_mpi_region_locations <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="at">file =</span> <span class="fu">paste0</span>(folder_name,<span class="st">"kiva_mpi_region_locations.csv"</span>))</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>loan_themes <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="at">file =</span> <span class="fu">paste0</span>(folder_name,<span class="st">"loan_theme_ids.csv"</span>))</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>loan_themes_by_region  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="at">file =</span> <span class="fu">paste0</span>(folder_name,<span class="st">"loan_themes_by_region.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>loan_themes <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="at">file =</span> <span class="fu">paste0</span>(folder_name,<span class="st">"loan_theme_ids.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="data-exploration" class="level2">
@@ -463,181 +465,253 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
-<section id="loan-themes-by-region" class="level3">
-<h3 class="anchored" data-anchor-id="loan-themes-by-region">Loan Themes by Region</h3>
+</section>
+<section id="merge-datasets" class="level2">
+<h2 class="anchored" data-anchor-id="merge-datasets">Merge Datasets</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># To check the data type of each column</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(loan_themes_by_region) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>merged_data <span class="ot">&lt;-</span> kiva_loans <span class="sc">%&gt;%</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(loan_themes, <span class="at">by =</span> <span class="st">"id"</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>merged_data <span class="ot">&lt;-</span> merged_data <span class="sc">%&gt;%</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(kiva_mpi_region_locations, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"country"</span> <span class="ot">=</span> <span class="st">"country"</span>, <span class="st">"region"</span> <span class="ot">=</span> <span class="st">"region"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="explore-merged-data" class="level3">
+<h3 class="anchored" data-anchor-id="explore-merged-data">Explore Merged Data</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># To check the data type of each column</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(merged_data) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>spc_tbl_ [15,736 × 21] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
- $ Partner ID        : num [1:15736] 9 9 9 9 9 9 9 9 9 9 ...
- $ Field Partner Name: chr [1:15736] "KREDIT Microfinance Institution" "KREDIT Microfinance Institution" "KREDIT Microfinance Institution" "KREDIT Microfinance Institution" ...
- $ sector            : chr [1:15736] "General Financial Inclusion" "General Financial Inclusion" "General Financial Inclusion" "General Financial Inclusion" ...
- $ Loan Theme ID     : chr [1:15736] "a1050000000slfi" "a10500000068jPe" "a1050000000slfi" "a10500000068jPe" ...
- $ Loan Theme Type   : chr [1:15736] "Higher Education" "Vulnerable Populations" "Higher Education" "Vulnerable Populations" ...
- $ country           : chr [1:15736] "Cambodia" "Cambodia" "Cambodia" "Cambodia" ...
- $ forkiva           : chr [1:15736] "No" "No" "No" "No" ...
- $ region            : chr [1:15736] "Banteay Meanchey" "Battambang Province" "Battambang Province" "Kampong Cham Province" ...
- $ geocode_old       : chr [1:15736] "(13.75, 103.0)" NA NA "(12.0, 105.5)" ...
- $ ISO               : chr [1:15736] "KHM" "KHM" "KHM" "KHM" ...
- $ number            : num [1:15736] 1 58 7 1383 3 ...
- $ amount            : num [1:15736] 450 20275 9150 604950 275 ...
- $ LocationName      : chr [1:15736] "Banteay Meanchey, Cambodia" "Battambang Province, Cambodia" "Battambang Province, Cambodia" "Kampong Cham Province, Cambodia" ...
- $ geocode           : chr [1:15736] "[(13.6672596, 102.8975098)]" "[(13.0286971, 102.989615)]" "[(13.0286971, 102.989615)]" "[(12.0982918, 105.3131185)]" ...
- $ names             : chr [1:15736] "Banteay Meanchey Province; Cambodia" "Battambang Province; Cambodia" "Battambang Province; Cambodia" "Kampong Cham Province; Cambodia" ...
- $ geo               : chr [1:15736] "(13.6672596, 102.8975098)" "(13.0286971, 102.989615)" "(13.0286971, 102.989615)" "(12.0982918, 105.3131185)" ...
- $ lat               : num [1:15736] 13.7 13 13 12.1 12.1 ...
- $ lon               : num [1:15736] 103 103 103 105 105 ...
- $ mpi_region        : chr [1:15736] "Banteay Mean Chey, Cambodia" "Banteay Mean Chey, Cambodia" "Banteay Mean Chey, Cambodia" "Kampong Cham, Cambodia" ...
- $ mpi_geo           : chr [1:15736] "(13.6672596, 102.8975098)" "(13.6672596, 102.8975098)" "(13.6672596, 102.8975098)" "(11.9924294, 105.4645408)" ...
- $ rural_pct         : num [1:15736] 90 90 90 90 90 90 90 90 90 90 ...
+<pre><code>spc_tbl_ [671,205 × 30] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+ $ id                : num [1:671205] 653051 653053 653068 653063 653084 ...
+ $ funded_amount     : num [1:671205] 300 575 150 200 400 250 200 400 475 625 ...
+ $ loan_amount       : num [1:671205] 300 575 150 200 400 250 200 400 475 625 ...
+ $ activity          : chr [1:671205] "Fruits &amp; Vegetables" "Rickshaw" "Transportation" "Embroidery" ...
+ $ sector            : chr [1:671205] "Food" "Transportation" "Transportation" "Arts" ...
+ $ use               : chr [1:671205] "To buy seasonal, fresh fruits to sell." "to repair and maintain the auto rickshaw used in their business." "To repair their old cycle-van and buy another one to rent out as a source of income" "to purchase an embroidery machine and a variety of new embroidery materials." ...
+ $ country_code      : chr [1:671205] "PK" "PK" "IN" "PK" ...
+ $ country           : chr [1:671205] "Pakistan" "Pakistan" "India" "Pakistan" ...
+ $ region            : chr [1:671205] "Lahore" "Lahore" "Maynaguri" "Lahore" ...
+ $ currency          : chr [1:671205] "PKR" "PKR" "INR" "PKR" ...
+ $ partner_id        : num [1:671205] 247 247 334 247 245 NA 334 245 245 247 ...
+ $ posted_time       : POSIXct[1:671205], format: "2014-01-01 06:12:39" "2014-01-01 06:51:08" ...
+ $ disbursed_time    : POSIXct[1:671205], format: "2013-12-17 08:00:00" "2013-12-17 08:00:00" ...
+ $ funded_time       : POSIXct[1:671205], format: "2014-01-02 10:06:32" "2014-01-02 09:17:23" ...
+ $ term_in_months    : num [1:671205] 12 11 43 11 14 4 43 14 14 11 ...
+ $ lender_count      : num [1:671205] 12 14 6 8 16 6 8 8 19 24 ...
+ $ tags              : chr [1:671205] NA NA "user_favorite, user_favorite" NA ...
+ $ borrower_genders  : chr [1:671205] "female" "female, female" "female" "female" ...
+ $ repayment_interval: chr [1:671205] "irregular" "irregular" "bullet" "irregular" ...
+ $ date              : Date[1:671205], format: "2014-01-01" "2014-01-01" ...
+ $ Loan Theme ID     : chr [1:671205] NA "a1050000000sjEC" "a1050000002VkWz" "a1050000000sjEC" ...
+ $ Loan Theme Type   : chr [1:671205] NA "Underserved" "Underserved" "Underserved" ...
+ $ Partner ID        : num [1:671205] NA 247 334 247 245 NA 334 245 245 NA ...
+ $ LocationName      : chr [1:671205] NA NA NA NA ...
+ $ ISO               : chr [1:671205] NA NA NA NA ...
+ $ world_region      : chr [1:671205] NA NA NA NA ...
+ $ MPI               : num [1:671205] NA NA NA NA NA NA NA NA NA NA ...
+ $ geo               : chr [1:671205] NA NA NA NA ...
+ $ lat               : num [1:671205] NA NA NA NA NA NA NA NA NA NA ...
+ $ lon               : num [1:671205] NA NA NA NA NA NA NA NA NA NA ...
  - attr(*, "spec")=
   .. cols(
-  ..   `Partner ID` = col_double(),
-  ..   `Field Partner Name` = col_character(),
+  ..   id = col_double(),
+  ..   funded_amount = col_double(),
+  ..   loan_amount = col_double(),
+  ..   activity = col_character(),
   ..   sector = col_character(),
-  ..   `Loan Theme ID` = col_character(),
-  ..   `Loan Theme Type` = col_character(),
+  ..   use = col_character(),
+  ..   country_code = col_character(),
   ..   country = col_character(),
-  ..   forkiva = col_character(),
   ..   region = col_character(),
-  ..   geocode_old = col_character(),
-  ..   ISO = col_character(),
-  ..   number = col_double(),
-  ..   amount = col_double(),
-  ..   LocationName = col_character(),
-  ..   geocode = col_character(),
-  ..   names = col_character(),
-  ..   geo = col_character(),
-  ..   lat = col_double(),
-  ..   lon = col_double(),
-  ..   mpi_region = col_character(),
-  ..   mpi_geo = col_character(),
-  ..   rural_pct = col_double()
+  ..   currency = col_character(),
+  ..   partner_id = col_double(),
+  ..   posted_time = col_datetime(format = ""),
+  ..   disbursed_time = col_datetime(format = ""),
+  ..   funded_time = col_datetime(format = ""),
+  ..   term_in_months = col_double(),
+  ..   lender_count = col_double(),
+  ..   tags = col_character(),
+  ..   borrower_genders = col_character(),
+  ..   repayment_interval = col_character(),
+  ..   date = col_date(format = "")
   .. )
  - attr(*, "problems")=&lt;externalptr&gt; </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># To view the data snippet</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(loan_themes_by_region,<span class="dv">3</span>), <span class="st">"html"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># To view the data snippet</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(merged_data,<span class="dv">3</span>), <span class="st">"html"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-striped table-hover table-sm small" data-quarto-postprocess="true">
 <thead>
 <tr class="header">
-<th style="text-align: right;" data-quarto-table-cell-role="th">Partner ID</th>
-<th style="text-align: left;" data-quarto-table-cell-role="th">Field Partner Name</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">id</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">funded_amount</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">loan_amount</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">activity</th>
 <th style="text-align: left;" data-quarto-table-cell-role="th">sector</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">use</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">country_code</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">country</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">region</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">currency</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">partner_id</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">posted_time</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">disbursed_time</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">funded_time</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">term_in_months</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">lender_count</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">tags</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">borrower_genders</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">repayment_interval</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">date</th>
 <th style="text-align: left;" data-quarto-table-cell-role="th">Loan Theme ID</th>
 <th style="text-align: left;" data-quarto-table-cell-role="th">Loan Theme Type</th>
-<th style="text-align: left;" data-quarto-table-cell-role="th">country</th>
-<th style="text-align: left;" data-quarto-table-cell-role="th">forkiva</th>
-<th style="text-align: left;" data-quarto-table-cell-role="th">region</th>
-<th style="text-align: left;" data-quarto-table-cell-role="th">geocode_old</th>
-<th style="text-align: left;" data-quarto-table-cell-role="th">ISO</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">number</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">amount</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Partner ID</th>
 <th style="text-align: left;" data-quarto-table-cell-role="th">LocationName</th>
-<th style="text-align: left;" data-quarto-table-cell-role="th">geocode</th>
-<th style="text-align: left;" data-quarto-table-cell-role="th">names</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ISO</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">world_region</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">MPI</th>
 <th style="text-align: left;" data-quarto-table-cell-role="th">geo</th>
 <th style="text-align: right;" data-quarto-table-cell-role="th">lat</th>
 <th style="text-align: right;" data-quarto-table-cell-role="th">lon</th>
-<th style="text-align: left;" data-quarto-table-cell-role="th">mpi_region</th>
-<th style="text-align: left;" data-quarto-table-cell-role="th">mpi_geo</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">rural_pct</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">9</td>
-<td style="text-align: left;">KREDIT Microfinance Institution</td>
-<td style="text-align: left;">General Financial Inclusion</td>
-<td style="text-align: left;">a1050000000slfi</td>
-<td style="text-align: left;">Higher Education</td>
-<td style="text-align: left;">Cambodia</td>
-<td style="text-align: left;">No</td>
-<td style="text-align: left;">Banteay Meanchey</td>
-<td style="text-align: left;">(13.75, 103.0)</td>
-<td style="text-align: left;">KHM</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">450</td>
-<td style="text-align: left;">Banteay Meanchey, Cambodia</td>
-<td style="text-align: left;">[(13.6672596, 102.8975098)]</td>
-<td style="text-align: left;">Banteay Meanchey Province; Cambodia</td>
-<td style="text-align: left;">(13.6672596, 102.8975098)</td>
-<td style="text-align: right;">13.66726</td>
-<td style="text-align: right;">102.8975</td>
-<td style="text-align: left;">Banteay Mean Chey, Cambodia</td>
-<td style="text-align: left;">(13.6672596, 102.8975098)</td>
-<td style="text-align: right;">90</td>
+<td style="text-align: right;">653051</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: left;">Fruits &amp; Vegetables</td>
+<td style="text-align: left;">Food</td>
+<td style="text-align: left;">To buy seasonal, fresh fruits to sell.</td>
+<td style="text-align: left;">PK</td>
+<td style="text-align: left;">Pakistan</td>
+<td style="text-align: left;">Lahore</td>
+<td style="text-align: left;">PKR</td>
+<td style="text-align: right;">247</td>
+<td style="text-align: left;">2014-01-01 06:12:39</td>
+<td style="text-align: left;">2013-12-17 08:00:00</td>
+<td style="text-align: left;">2014-01-02 10:06:32</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">female</td>
+<td style="text-align: left;">irregular</td>
+<td style="text-align: left;">2014-01-01</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">9</td>
-<td style="text-align: left;">KREDIT Microfinance Institution</td>
-<td style="text-align: left;">General Financial Inclusion</td>
-<td style="text-align: left;">a10500000068jPe</td>
-<td style="text-align: left;">Vulnerable Populations</td>
-<td style="text-align: left;">Cambodia</td>
-<td style="text-align: left;">No</td>
-<td style="text-align: left;">Battambang Province</td>
+<td style="text-align: right;">653053</td>
+<td style="text-align: right;">575</td>
+<td style="text-align: right;">575</td>
+<td style="text-align: left;">Rickshaw</td>
+<td style="text-align: left;">Transportation</td>
+<td style="text-align: left;">to repair and maintain the auto rickshaw used in their business.</td>
+<td style="text-align: left;">PK</td>
+<td style="text-align: left;">Pakistan</td>
+<td style="text-align: left;">Lahore</td>
+<td style="text-align: left;">PKR</td>
+<td style="text-align: right;">247</td>
+<td style="text-align: left;">2014-01-01 06:51:08</td>
+<td style="text-align: left;">2013-12-17 08:00:00</td>
+<td style="text-align: left;">2014-01-02 09:17:23</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">14</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: left;">KHM</td>
-<td style="text-align: right;">58</td>
-<td style="text-align: right;">20275</td>
-<td style="text-align: left;">Battambang Province, Cambodia</td>
-<td style="text-align: left;">[(13.0286971, 102.989615)]</td>
-<td style="text-align: left;">Battambang Province; Cambodia</td>
-<td style="text-align: left;">(13.0286971, 102.989615)</td>
-<td style="text-align: right;">13.02870</td>
-<td style="text-align: right;">102.9896</td>
-<td style="text-align: left;">Banteay Mean Chey, Cambodia</td>
-<td style="text-align: left;">(13.6672596, 102.8975098)</td>
-<td style="text-align: right;">90</td>
+<td style="text-align: left;">female, female</td>
+<td style="text-align: left;">irregular</td>
+<td style="text-align: left;">2014-01-01</td>
+<td style="text-align: left;">a1050000000sjEC</td>
+<td style="text-align: left;">Underserved</td>
+<td style="text-align: right;">247</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">9</td>
-<td style="text-align: left;">KREDIT Microfinance Institution</td>
-<td style="text-align: left;">General Financial Inclusion</td>
-<td style="text-align: left;">a1050000000slfi</td>
-<td style="text-align: left;">Higher Education</td>
-<td style="text-align: left;">Cambodia</td>
-<td style="text-align: left;">No</td>
-<td style="text-align: left;">Battambang Province</td>
+<td style="text-align: right;">653068</td>
+<td style="text-align: right;">150</td>
+<td style="text-align: right;">150</td>
+<td style="text-align: left;">Transportation</td>
+<td style="text-align: left;">Transportation</td>
+<td style="text-align: left;">To repair their old cycle-van and buy another one to rent out as a source of income</td>
+<td style="text-align: left;">IN</td>
+<td style="text-align: left;">India</td>
+<td style="text-align: left;">Maynaguri</td>
+<td style="text-align: left;">INR</td>
+<td style="text-align: right;">334</td>
+<td style="text-align: left;">2014-01-01 09:58:07</td>
+<td style="text-align: left;">2013-12-17 08:00:00</td>
+<td style="text-align: left;">2014-01-01 16:01:36</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">user_favorite, user_favorite</td>
+<td style="text-align: left;">female</td>
+<td style="text-align: left;">bullet</td>
+<td style="text-align: left;">2014-01-01</td>
+<td style="text-align: left;">a1050000002VkWz</td>
+<td style="text-align: left;">Underserved</td>
+<td style="text-align: right;">334</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: left;">KHM</td>
-<td style="text-align: right;">7</td>
-<td style="text-align: right;">9150</td>
-<td style="text-align: left;">Battambang Province, Cambodia</td>
-<td style="text-align: left;">[(13.0286971, 102.989615)]</td>
-<td style="text-align: left;">Battambang Province; Cambodia</td>
-<td style="text-align: left;">(13.0286971, 102.989615)</td>
-<td style="text-align: right;">13.02870</td>
-<td style="text-align: right;">102.9896</td>
-<td style="text-align: left;">Banteay Mean Chey, Cambodia</td>
-<td style="text-align: left;">(13.6672596, 102.8975098)</td>
-<td style="text-align: right;">90</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 </tbody>
 </table>
 
 
 </div>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(loan_themes_by_region)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(merged_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 15736    21</code></pre>
+<pre><code>[1] 671205     30</code></pre>
 </div>
 </div>
-<p>Renaming the <code>sector</code> column in <code>loan_themes_by_region</code> data frame to <code>loan_theme_sector</code> because we have <code>sector</code> column with a different meaning in <code>kiva_loans</code> data frame.</p>
+</section>
+</section>
+<section id="handling-missing-values" class="level2">
+<h2 class="anchored" data-anchor-id="handling-missing-values">Handling Missing Values</h2>
+<p>To handle missing data we remove all the rows with NA values</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>loan_themes_by_region <span class="ot">&lt;-</span> loan_themes_by_region <span class="sc">%&gt;%</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">loan_theme_sector =</span> sector</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>merged_data <span class="ot">&lt;-</span> merged_data[<span class="fu">complete.cases</span>(merged_data),]</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(merged_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 34856    30</code></pre>
 </div>
-</section>
-</section>
-<section id="merge-datasets" class="level2">
-<h2 class="anchored" data-anchor-id="merge-datasets">Merge Datasets</h2>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(merged_data<span class="sc">$</span>loan_amount)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   25.0   200.0   500.0   818.8  1000.0 50000.0 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(merged_data<span class="sc">$</span>term_in_months)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   2.00    8.00   14.00   14.17   17.00  122.00 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(merged_data<span class="sc">$</span>loan_amount, merged_data<span class="sc">$</span>term_in_months, <span class="at">use =</span> <span class="st">"complete.obs"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.1408691</code></pre>
+</div>
+</div>
 </section>
 
 </main>

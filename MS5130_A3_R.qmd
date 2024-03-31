@@ -35,7 +35,6 @@ folder_name <- 'D:/NUIG BA/MS5130_Applied Analytics_R/R_A3/data/'
 kiva_loans <- read_csv(file = paste0(folder_name,"kiva_loans.csv"))
 kiva_mpi_region_locations <- read_csv(file = paste0(folder_name,"kiva_mpi_region_locations.csv"))
 loan_themes <- read_csv(file = paste0(folder_name,"loan_theme_ids.csv"))
-loan_themes_by_region  <- read_csv(file = paste0(folder_name,"loan_themes_by_region.csv"))
 
 ```
 
@@ -81,25 +80,41 @@ kable(head(loan_themes,3), "html") %>%
 dim(loan_themes)
 ```
 
-### Loan Themes by Region
-
-```{r}
-#| label: Loan Themes by Region
-# To check the data type of each column
-str(loan_themes_by_region) 
-# To view the data snippet
-kable(head(loan_themes_by_region,3), "html") %>% 
-  kable_styling(bootstrap_options = c("striped", "hover"))
-dim(loan_themes_by_region)
-```
-
-Renaming the `sector` column in `loan_themes_by_region` data frame to `loan_theme_sector` because we have `sector` column with a different meaning in `kiva_loans` data frame.
-
-```{r}
-loan_themes_by_region <- loan_themes_by_region %>%
-  rename(
-    loan_theme_sector = sector
-  )
-```
-
 ## Merge Datasets
+
+```{r}
+merged_data <- kiva_loans %>%
+  left_join(loan_themes, by = "id")
+merged_data <- merged_data %>%
+  left_join(kiva_mpi_region_locations, by = c("country" = "country", "region" = "region"))
+```
+
+### Explore Merged Data
+
+```{r}
+#| label: Merged Data
+# To check the data type of each column
+str(merged_data) 
+# To view the data snippet
+kable(head(merged_data,3), "html") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+dim(merged_data)
+```
+
+## Handling Missing Values
+
+To handle missing data we remove all the rows with NA values
+
+```{r}
+merged_data <- merged_data[complete.cases(merged_data),]
+dim(merged_data)
+```
+
+```{r}
+summary(merged_data$loan_amount)
+summary(merged_data$term_in_months)
+```
+
+```{r}
+cor(merged_data$loan_amount, merged_data$term_in_months, use = "complete.obs")
+```
