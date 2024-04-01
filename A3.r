@@ -19,33 +19,31 @@ folder_name <- 'D:/NUIG BA/MS5130_Applied Analytics_R/R_A3/data/'
 kiva_loans <- read_csv(file = paste0(folder_name,"kiva_loans.csv"))
 kiva_mpi_region_locations <- read_csv(file = paste0(folder_name,"kiva_mpi_region_locations.csv"))
 loan_themes <- read_csv(file = paste0(folder_name,"loan_theme_ids.csv"))
-loan_themes_by_region  <- read_csv(file = paste0(folder_name,"loan_themes_by_region.csv"))
+
 
 # Data Exploration
 str(kiva_loans)
 str(kiva_mpi_region_locations)
 str(loan_themes)
-str(loan_themes_by_region)
+
 
 # Handling missing data
 kiva_loans <- kiva_loans[complete.cases(kiva_loans),]
 kiva_mpi_region_locations <- kiva_mpi_region_locations[complete.cases(kiva_mpi_region_locations),]
 loan_themes <- loan_themes[complete.cases(loan_themes),]
-loan_themes_by_region <- loan_themes_by_region[complete.cases(loan_themes_by_region),]
+
 
 # Shape of data
 dim(kiva_loans)
 dim(kiva_mpi_region_locations)
 dim(loan_themes)
-dim(loan_themes_by_region)
+
 
 # Merge Data
 merged_data <- kiva_loans %>%
+  left_join(loan_themes, by = "id")
+merged_data <- merged_data %>%
   left_join(kiva_mpi_region_locations, by = c("country" = "country", "region" = "region"))
-loan_themes_merged <- loan_themes %>% 
-  left_join(loan_themes_by_region, by = c("Loan Theme ID","Partner ID"))
-merged_data <- merged_data %>% 
-  left_join(loan_themes_merged, by = "id")
 
 # Explore merged data
 str(merged_data)
@@ -58,6 +56,7 @@ merged_data <- merged_data[complete.cases(merged_data),]
 
 str(merged_data)
 
+head(merged_data)
 # Most Popular Sectors
 
 merged_data %>%

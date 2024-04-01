@@ -16,13 +16,14 @@ editor: visual
 #| results: hide
 library(tidyverse)
 library(leaflet)
-library(DT)
-library(kableExtra)
+library(knitr)
+library(ggplot2)
+library(tidyr)
+library(tidytext)
+library(stringr)
 ```
 
 ## Loading the dataset
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
 
 ```{r}
 #| label: load data
@@ -49,8 +50,7 @@ For all 4 dataset's, we check the datatype of each column using `str()`, view th
 # To check the data type of each column
 str(kiva_loans) 
 # To view the data snippet
-kable(head(kiva_loans,3), "html") %>% 
-  kable_styling(bootstrap_options = c("striped", "hover"))
+kable(head(kiva_loans,3))
 #To get the shape of data
 dim(kiva_loans)
 ```
@@ -62,8 +62,7 @@ dim(kiva_loans)
 # To check the data type of each column
 str(kiva_mpi_region_locations) 
 # To view the data snippet
-kable(head(kiva_mpi_region_locations,3), "html") %>% 
-  kable_styling(bootstrap_options = c("striped", "hover"))
+kable(head(kiva_mpi_region_locations,3))
 #To get the shape of data
 dim(kiva_mpi_region_locations)
 ```
@@ -75,8 +74,7 @@ dim(kiva_mpi_region_locations)
 # To check the data type of each column
 str(loan_themes) 
 # To view the data snippet
-kable(head(loan_themes,3), "html") %>% 
-  kable_styling(bootstrap_options = c("striped", "hover"))
+kable(head(loan_themes,3))
 dim(loan_themes)
 ```
 
@@ -96,8 +94,7 @@ merged_data <- merged_data %>%
 # To check the data type of each column
 str(merged_data) 
 # To view the data snippet
-kable(head(merged_data,3), "html") %>% 
-  kable_styling(bootstrap_options = c("striped", "hover"))
+kable(head(merged_data,3))
 dim(merged_data)
 ```
 
@@ -107,14 +104,147 @@ To handle missing data we remove all the rows with NA values
 
 ```{r}
 merged_data <- merged_data[complete.cases(merged_data),]
-dim(merged_data)
+```
+
+## Exploratory Data Analysis
+
+```{r}
+names(merged_data)
+```
+
+### Loan Amount Distribution
+
+X-axis is log transformed for better visualization
+
+```{r}
+ggplot(merged_data, aes(x = loan_amount)) + 
+  geom_histogram(fill = "blue", bins = 30) +
+  scale_x_log10() +  # Apply log transformation to the x-axis
+  labs(title = "Distribution of Loan Amounts (Log Transformed X Axis)",
+       x = "Loan Amount (Log Scale)", 
+       y = "Count") +
+  theme_minimal()
+```
+
+### Distribution of Loans by Gender
+
+```{r}
+head(unique(merged_data$borrower_genders))
 ```
 
 ```{r}
-summary(merged_data$loan_amount)
-summary(merged_data$term_in_months)
+merged_data <- merged_data %>%
+  mutate(borrower_genders = ifelse(str_detect(borrower_genders, "female"), "female", "male"))
 ```
 
 ```{r}
-cor(merged_data$loan_amount, merged_data$term_in_months, use = "complete.obs")
+merged_data %>%
+  count(borrower_genders) %>%
+  mutate(percent = n / sum(n) * 100) %>%
+  ggplot(aes(x = "", y = n, fill = borrower_genders)) +
+  geom_col() +
+  coord_polar(theta = "y") + # Transform the bar plot into a pie chart
+  scale_fill_manual(values = c("female" = "#FF69B4", "male" = "#1E90FF")) +
+  geom_text(aes(label = paste0(round(percent, 1), "%"), y = n / 2), 
+            position = position_stack(vjust = 0.8)) +
+  labs(title = "Distribution of Loans by Gender", fill = "Gender") +
+  theme_void()
+```
+
+### Loans by Country and Sector
+
+#### Top Countries by Number of Loans
+
+```{r}
+merged_data %>% 
+  group_by(country) %>% 
+  summarise(Count = n()) %>% 
+  top_n(10) %>% 
+  ggplot(aes(x = reorder(country, Count), y = Count)) + 
+  geom_bar(stat = "identity", fill = "green") + 
+  coord_flip() + 
+  labs(title = "Top 10 Countries by Number of Loans", x = "", y = "Number of Loans")
+```
+
+#### Top Countries by number of loans on Map
+
+References:
+
+1.  Learning leaflet: <https://geanders.github.io/navy_public_health/4-3-leaflet.html>
+2.  For choosing the layer: <https://leaflet-extras.github.io/leaflet-providers/preview/>
+
+```{r}
+library(leaflet)
+
+# Aggregating loan data by country
+country_loans <- merged_data %>%
+  group_by(country) %>%
+  summarise(Count = n(), Avg_Lat = mean(lat, na.rm = TRUE), Avg_Lon = mean(lon, na.rm = TRUE)) %>%
+  arrange(desc(Count)) %>%
+  top_n(10, Count)
+
+# Create a leaflet map
+leaflet(country_loans) %>%
+  addTiles() %>%
+  addMarkers(lng = ~Avg_Lon, lat = ~Avg_Lat, popup = ~paste(country, ": ", Count, " loans")) %>%
+  addProviderTiles(providers$CartoDB.Positron)
+  
+```
+
+#### Loans by Sector
+
+```{r}
+merged_data %>% 
+  group_by(sector) %>% 
+  summarise(Count = n()) %>% 
+  ggplot(aes(x = reorder(sector, Count), y = Count)) + 
+  geom_bar(stat = "identity", fill = "orange") + 
+  coord_flip() + 
+  labs(title = "Sector by Number of Loans", x = "", y = "Number of Loans")
+```
+
+### How does the Multidimensional Poverty Index (MPI) relate to loan amounts?
+
+```{r}
+ggplot(merged_data, aes(x = MPI, y = loan_amount)) + 
+  geom_point(aes(color = MPI), alpha = 0.5) + 
+  scale_color_gradient(low = "yellow", high = "red") + 
+  labs(title = "Loan Amount vs. Multidimensional Poverty Index (MPI)", x = "MPI", y = "Loan Amount")
+```
+
+Loan amounts tend to be higher in areas with very low Multidimensional Poverty Index (MPI) values, indicating a correlation between lower poverty levels and the ability to secure larger loans.
+
+Conversely, in regions where the MPI is higher, reflecting greater poverty, the loan amounts accessed are significantly lower.
+
+This pattern suggests that the extent of poverty, as measured by the MPI, may influence the scale of financial assistance provided or sought through loans.
+
+### **MPI Map**
+
+```{r}
+pal <- colorNumeric(
+  palette = colorRampPalette(c('green', 'red'))(length(merged_data$MPI)), 
+  domain = merged_data$MPI)
+
+regions_no_NA = merged_data %>%
+  filter(!is.na(lon)) %>%
+  filter(!is.na(lat))
+
+center_lon = median(merged_data$lon,na.rm = TRUE)
+center_lat = median(merged_data$lat,na.rm = TRUE)
+
+leaflet(data = regions_no_NA) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng =  ~ lon,
+    lat =  ~ lat,
+    radius = ~ MPI*10,
+    popup =  ~ country,
+    color =  ~ pal(MPI)
+  ) %>%
+  # controls
+  #setView(lng=center_lon, lat=center_lat,zoom = 3) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addLegend("topleft", pal = pal, values = ~MPI,
+          title = "MPI Map",
+           opacity = 1)
 ```
