@@ -178,7 +178,7 @@ merged_data %>%
   labs(title = "Sector by Number of Loans", x = "", y = "Number of Loans")
 ```
 
-### How does the Multidimensional Poverty Index (MPI) relate to loan amounts?
+### Relation between Loan Amount and MPI
 
 ```{r}
 ggplot(merged_data, aes(x = MPI, y = loan_amount)) + 
@@ -227,31 +227,6 @@ leaflet(data = regions_no_NA) %>%
   addLegend("topleft", pal = pal, values = ~MPI,
           title = "MPI Map",
            opacity = 1)
-```
-
-## KIVA's Reach by Loan Theme
-
-```{r}
-aggregated_data <- merged_data %>%
-  group_by(`Loan Theme Type`) %>%
-  summarise(TotalFundedAmount = sum(funded_amount, na.rm = TRUE)) %>%
-  arrange(desc(TotalFundedAmount))
-print(aggregated_data)
-```
-
-```{r}
-aggregated_data <- aggregated_data %>% 
-  filter(`Loan Theme Type` != "General")
-```
-
-```{r}
-ggplot(head(aggregated_data,10), aes(x = reorder(`Loan Theme Type`, TotalFundedAmount), y = TotalFundedAmount)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  theme_minimal() +
-  labs(title = "Top 10 Loan Theme Types by Funded Amount",
-       x = "Loan Theme Type",
-       y = "Total Funded Amount") +
-  coord_flip()
 ```
 
 ## Focus Area's for KIVA
@@ -320,21 +295,45 @@ summary(model)
 
 # Predictions
 predictions <- predict(model, newdata=testData)
-```
 
-A Mean Absolute Error (MAE) of approximately 461.96 suggests that on average, the predictions of your model deviate from the actual values by about 461.96
-
-The target variable `loan_amount` ranges in the thousands, an MAE of 523.62 might indicate a relatively good model performance
-
-```{r}
 # Measure performance
 MAE <- mean(abs(predictions - testData$loan_amount))
 print(paste("Mean Absolute Error:", MAE))
+```
 
-# Calculate RMSE
-RMSE <- sqrt(mean((predictions - testData$loan_amount)^2))
-print(paste("Root Mean Square Error:", RMSE))
+A Mean Absolute Error (MAE) of approximately 461.96 suggests that on average, the predictions of our model deviate from the actual values by about 461.96.
 
+```{r}
+merged_data %>% 
+  select(loan_amount) %>% 
+  summary()
+```
+
+The target variable `loan_amount` ranges between 25 and 50000 where the median is 500, an MAE of 461.96 suggest that the model is not performing well and there is scope for improvement
+
+## KIVA's Reach by Loan Theme
+
+```{r}
+aggregated_data <- merged_data %>%
+  group_by(`Loan Theme Type`) %>%
+  summarise(TotalFundedAmount = sum(funded_amount, na.rm = TRUE)) %>%
+  arrange(desc(TotalFundedAmount))
+print(aggregated_data)
+```
+
+```{r}
+aggregated_data <- aggregated_data %>% 
+  filter(`Loan Theme Type` != "General")
+```
+
+```{r}
+ggplot(head(aggregated_data,10), aes(x = reorder(`Loan Theme Type`, TotalFundedAmount), y = TotalFundedAmount)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Top 10 Loan Theme Types by Funded Amount",
+       x = "Loan Theme Type",
+       y = "Total Funded Amount") +
+  coord_flip()
 ```
 
 ## Textual Analysis
