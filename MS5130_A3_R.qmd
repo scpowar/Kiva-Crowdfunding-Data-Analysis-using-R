@@ -27,7 +27,7 @@ library(caret)
 library(reshape2)
 ```
 
-## Loading the dataset
+## Loading the Data Set
 
 ```{r}
 #| label: load data
@@ -112,10 +112,6 @@ merged_data <- merged_data[complete.cases(merged_data),]
 
 ## Exploratory Data Analysis
 
-```{r}
-names(merged_data)
-```
-
 ### Loan Amount Distribution
 
 X-axis is log transformed for better visualization
@@ -148,7 +144,7 @@ merged_data %>%
   ggplot(aes(x = "", y = n, fill = borrower_genders)) +
   geom_col() +
   coord_polar(theta = "y") + # Transform the bar plot into a pie chart
-  scale_fill_manual(values = c("female" = "#FF69B4", "male" = "#1E90FF")) +
+  scale_fill_manual(values = c("female" = "hotpink1", "male" = "cornflowerblue")) +
   geom_text(aes(label = paste0(round(percent, 1), "%"), y = n / 2), 
             position = position_stack(vjust = 0.8)) +
   labs(title = "Distribution of Loans by Gender", fill = "Gender") +
@@ -165,7 +161,7 @@ merged_data %>%
   summarise(Count = n()) %>% 
   top_n(10) %>% 
   ggplot(aes(x = reorder(country, Count), y = Count)) + 
-  geom_bar(stat = "identity", fill = "green") + 
+  geom_bar(stat = "identity", fill = "springgreen4") + 
   coord_flip() + 
   labs(title = "Top 10 Countries by Number of Loans", x = "", y = "Number of Loans")
 ```
@@ -233,6 +229,31 @@ leaflet(data = regions_no_NA) %>%
            opacity = 1)
 ```
 
+## KIVA's Reach by Loan Theme
+
+```{r}
+aggregated_data <- merged_data %>%
+  group_by(`Loan Theme Type`) %>%
+  summarise(TotalFundedAmount = sum(funded_amount, na.rm = TRUE)) %>%
+  arrange(desc(TotalFundedAmount))
+print(aggregated_data)
+```
+
+```{r}
+aggregated_data <- aggregated_data %>% 
+  filter(`Loan Theme Type` != "General")
+```
+
+```{r}
+ggplot(head(aggregated_data,10), aes(x = reorder(`Loan Theme Type`, TotalFundedAmount), y = TotalFundedAmount)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Top 10 Loan Theme Types by Funded Amount",
+       x = "Loan Theme Type",
+       y = "Total Funded Amount") +
+  coord_flip()
+```
+
 ## Focus Area's for KIVA
 
 [Kiva.org](https://www.kaggle.com/kiva) is an online crowd funding platform to extend financial services to poor and financially excluded people around the world. 
@@ -297,9 +318,38 @@ model <- lm(loan_amount ~ sector + MPI + country, data=trainData)
 # Summarize the model
 summary(model)
 
+# Predictions
+predictions <- predict(model, newdata=testData)
+```
+
+A Mean Absolute Error (MAE) of approximately 461.96 suggests that on average, the predictions of your model deviate from the actual values by about 461.96
+
+The target variable `loan_amount` ranges in the thousands, an MAE of 523.62 might indicate a relatively good model performance
+
+```{r}
 # Measure performance
 MAE <- mean(abs(predictions - testData$loan_amount))
 print(paste("Mean Absolute Error:", MAE))
+
+# Calculate RMSE
+RMSE <- sqrt(mean((predictions - testData$loan_amount)^2))
+print(paste("Root Mean Square Error:", RMSE))
+
 ```
 
+## Textual Analysis
 
+```{r}
+merged_data %>% 
+  unnest_tokens(word, use) %>% 
+  count(word, sort = TRUE) %>% 
+  top_n(10) %>% 
+  ggplot(aes(x = reorder(word, n), y = n)) + 
+  geom_bar(stat = "identity", fill = "purple1") + 
+  coord_flip() + 
+  labs(title = "Top 10 Most Common Words in Loan Uses", x = "", y = "Frequency")
+```
+
+## References
+
+Color themes: <https://bookdown.org/hneth/ds4psy/D-3-apx-colors-basics.html>
