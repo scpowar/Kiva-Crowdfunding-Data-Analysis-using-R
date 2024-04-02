@@ -21,6 +21,10 @@ library(ggplot2)
 library(tidyr)
 library(tidytext)
 library(stringr)
+library(DT)
+library(treemap)
+library(caret)
+library(reshape2)
 ```
 
 ## Loading the dataset
@@ -166,31 +170,6 @@ merged_data %>%
   labs(title = "Top 10 Countries by Number of Loans", x = "", y = "Number of Loans")
 ```
 
-#### Top Countries by number of loans on Map
-
-References:
-
-1.  Learning leaflet: <https://geanders.github.io/navy_public_health/4-3-leaflet.html>
-2.  For choosing the layer: <https://leaflet-extras.github.io/leaflet-providers/preview/>
-
-```{r}
-library(leaflet)
-
-# Aggregating loan data by country
-country_loans <- merged_data %>%
-  group_by(country) %>%
-  summarise(Count = n(), Avg_Lat = mean(lat, na.rm = TRUE), Avg_Lon = mean(lon, na.rm = TRUE)) %>%
-  arrange(desc(Count)) %>%
-  top_n(10, Count)
-
-# Create a leaflet map
-leaflet(country_loans) %>%
-  addTiles() %>%
-  addMarkers(lng = ~Avg_Lon, lat = ~Avg_Lat, popup = ~paste(country, ": ", Count, " loans")) %>%
-  addProviderTiles(providers$CartoDB.Positron)
-  
-```
-
 #### Loans by Sector
 
 ```{r}
@@ -218,7 +197,12 @@ Conversely, in regions where the MPI is higher, reflecting greater poverty, the 
 
 This pattern suggests that the extent of poverty, as measured by the MPI, may influence the scale of financial assistance provided or sought through loans.
 
-### **MPI Map**
+### MPI Map
+
+References:
+
+1.  Learning leaflet: <https://geanders.github.io/navy_public_health/4-3-leaflet.html>
+2.  For choosing the layer: <https://leaflet-extras.github.io/leaflet-providers/preview/>
 
 ```{r}
 pal <- colorNumeric(
@@ -248,3 +232,74 @@ leaflet(data = regions_no_NA) %>%
           title = "MPI Map",
            opacity = 1)
 ```
+
+## Focus Area's for KIVA
+
+[Kiva.org](https://www.kaggle.com/kiva) is an online crowd funding platform to extend financial services to poor and financially excluded people around the world. 
+
+So the data of interest for KIVA are countries with high MPI
+
+```{r}
+mpi_quartiles <- quantile(merged_data$MPI, probs = c(0.75), na.rm = TRUE)
+
+# Filter data based on defined criteria
+filtered_data <- merged_data %>%
+  filter(MPI >= mpi_quartiles[1])
+```
+
+```{r}
+filtered_data <- merged_data %>%
+  filter(MPI >= mpi_quartiles) %>%
+  select(country, MPI, loan_amount, activity, sector) %>%
+  distinct()
+```
+
+```{r}
+kiva_opportunities = filtered_data %>%
+  group_by(country) %>%
+  summarise(LoanAmount = sum(loan_amount)) %>%
+  arrange(desc(LoanAmount)) %>%
+  ungroup() %>%
+  mutate(country = reorder(country,LoanAmount))
+
+
+treemap(kiva_opportunities, 
+        index="country", 
+        vSize = "LoanAmount",  
+        title="Countries with High MPI", 
+        palette = "RdBu" 
+)
+```
+
+Kiva.org can use the below table to increase their reach towards countries who need more help.
+
+```{r}
+datatable(filtered_data, options = list(pageLength = 10), filter = 'top', rownames = FALSE)
+```
+
+## Quantitative Analysis
+
+Model to Predict Loan Amount By sector, country & MPI
+
+```{r}
+merged_data$sector <- as.factor(merged_data$sector)
+merged_data$country <- as.factor(merged_data$country)
+
+# Split data into training and testing sets
+set.seed(123)
+index <- createDataPartition(merged_data$loan_amount, p=0.8, list=FALSE)
+trainData <- merged_data[index, ]
+testData <- merged_data[-index, ]
+
+# Build the linear regression model
+model <- lm(loan_amount ~ sector + MPI + country, data=trainData)
+
+# Summarize the model
+summary(model)
+
+# Measure performance
+MAE <- mean(abs(predictions - testData$loan_amount))
+print(paste("Mean Absolute Error:", MAE))
+```
+
+
