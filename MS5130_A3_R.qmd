@@ -1,5 +1,5 @@
 ---
-title: "Kiva Crowdfunding"
+title: "Kiva Crowdfunding Analysis Project"
 author: "Shraddha Powar"
 format:
   html:
@@ -7,7 +7,11 @@ format:
 editor: visual
 ---
 
-## Required Libraries
+The Kiva.org dataset provides valuable information related to loans issued over the last two years. It includes details about borrowers, their welfare levels, and other relevant factors. The dataset aims to help Kiva better understand and serve entrepreneurs around the world by assessing borrower welfare levels.
+
+**Data Set Link:** [Data Science for Good: Kiva Crowdfunding](https://www.kaggle.com/datasets/kiva/data-science-for-good-kiva-crowdfunding/data)
+
+# Required Libraries
 
 ```{r}
 #| label: load libraries
@@ -27,7 +31,11 @@ library(caret)
 library(reshape2)
 ```
 
-## Loading the Data Set
+# Loading the Data Set
+
+-   **Kiva Loans (`kiva_loans.csv`)**: Records of loans made through Kiva, detailing amounts, activities, sectors, use, geographic location, and repayment information.
+-   **Kiva MPI Region Locations (`kiva_mpi_region_locations.csv`)**: Geographic and MPI (Multidimensional Poverty Index) data for regions where Kiva operates, including location names, ISO codes, countries, and coordinates.
+-   **Loan Theme IDs (`loan_theme_ids.csv`)**: Matches loan IDs to theme IDs and types, providing insights into the broader purpose or categorization of loans.
 
 ```{r}
 #| label: load data
@@ -43,11 +51,22 @@ loan_themes <- read_csv(file = paste0(folder_name,"loan_theme_ids.csv"))
 
 ```
 
-## Data Exploration
+## Loan Themes
 
-For all 4 dataset's, we check the datatype of each column using `str()`, view the data snippet using `head()` and shape of the data using `dim()` function.
+```{r}
+#| label: Loan Themes 
+# To check the data type of each column 
+str(loan_themes)  
+# To view the data snippet 
+kable(head(loan_themes,3)) 
+dim(loan_themes)
+```
 
-### Kiva Loans Data
+## 
+
+# Exploratory Data Analysis
+
+## Kiva Loans Data
 
 ```{r}
 #| label: Kiva Loans Data
@@ -59,65 +78,12 @@ kable(head(kiva_loans,3))
 dim(kiva_loans)
 ```
 
-### Kiva MPI Region Locations
-
-```{r}
-#| label: Kiva MPI Region Locations
-# To check the data type of each column
-str(kiva_mpi_region_locations) 
-# To view the data snippet
-kable(head(kiva_mpi_region_locations,3))
-#To get the shape of data
-dim(kiva_mpi_region_locations)
-```
-
-### Loan Themes
-
-```{r}
-#| label: Loan Themes
-# To check the data type of each column
-str(loan_themes) 
-# To view the data snippet
-kable(head(loan_themes,3))
-dim(loan_themes)
-```
-
-## Merge Datasets
-
-```{r}
-merged_data <- kiva_loans %>%
-  left_join(loan_themes, by = "id")
-merged_data <- merged_data %>%
-  left_join(kiva_mpi_region_locations, by = c("country" = "country", "region" = "region"))
-```
-
-### Explore Merged Data
-
-```{r}
-#| label: Merged Data
-# To check the data type of each column
-str(merged_data) 
-# To view the data snippet
-kable(head(merged_data,3))
-dim(merged_data)
-```
-
-## Handling Missing Values
-
-To handle missing data we remove all the rows with NA values
-
-```{r}
-merged_data <- merged_data[complete.cases(merged_data),]
-```
-
-## Exploratory Data Analysis
-
 ### Loan Amount Distribution
 
 X-axis is log transformed for better visualization
 
 ```{r}
-ggplot(merged_data, aes(x = loan_amount)) + 
+ggplot(kiva_loans, aes(x = loan_amount)) + 
   geom_histogram(fill = "blue", bins = 30) +
   scale_x_log10() +  # Apply log transformation to the x-axis
   labs(title = "Distribution of Loan Amounts (Log Transformed X Axis)",
@@ -129,16 +95,21 @@ ggplot(merged_data, aes(x = loan_amount)) +
 ### Distribution of Loans by Gender
 
 ```{r}
-head(unique(merged_data$borrower_genders))
+head(unique(kiva_loans$borrower_genders))
 ```
 
 ```{r}
-merged_data <- merged_data %>%
+kiva_loans <- kiva_loans %>%
   mutate(borrower_genders = ifelse(str_detect(borrower_genders, "female"), "female", "male"))
 ```
 
 ```{r}
-merged_data %>%
+unique(kiva_loans$borrower_genders)
+```
+
+```{r}
+kiva_loans %>%
+  filter(!is.na(borrower_genders)) %>% 
   count(borrower_genders) %>%
   mutate(percent = n / sum(n) * 100) %>%
   ggplot(aes(x = "", y = n, fill = borrower_genders)) +
@@ -156,7 +127,7 @@ merged_data %>%
 #### Top Countries by Number of Loans
 
 ```{r}
-merged_data %>% 
+kiva_loans %>% 
   group_by(country) %>% 
   summarise(Count = n()) %>% 
   top_n(10) %>% 
@@ -169,7 +140,7 @@ merged_data %>%
 #### Loans by Sector
 
 ```{r}
-merged_data %>% 
+kiva_loans %>% 
   group_by(sector) %>% 
   summarise(Count = n()) %>% 
   ggplot(aes(x = reorder(sector, Count), y = Count)) + 
@@ -178,10 +149,118 @@ merged_data %>%
   labs(title = "Sector by Number of Loans", x = "", y = "Number of Loans")
 ```
 
-### Relation between Loan Amount and MPI
+## Textual Analysis
+
+To explore words most associated with education and agriculture sector.
 
 ```{r}
-ggplot(merged_data, aes(x = MPI, y = loan_amount)) + 
+kiva_loans %>%
+  filter(grepl("agriculture|education", sector, ignore.case = TRUE)) %>%
+  unnest_tokens(word, use) %>%
+  anti_join(stop_words) %>%
+  count(sector, word, sort = TRUE) %>%
+  group_by(sector) %>%
+  top_n(5) %>%
+  ungroup() %>%
+  ggplot(aes(x = reorder(word, n), y = n, fill = sector)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sector, scales = "free") +
+  coord_flip() +
+  labs(x = "Word", y = "Frequency", title = "Top Words in Loan Descriptions by Sector")
+```
+
+-   Helps in identifying Sector-Specific needs. For example, in agriculture, words like "buy," "fertilizer," and "seeds" suggest that loans are often sought for purchasing supplies. This insight can help Kiva to tailor their support programs to the specific need of that sector.
+
+## Kiva MPI Region Locations
+
+```{r}
+#| label: Kiva MPI Region Locations
+# To check the data type of each column
+str(kiva_mpi_region_locations) 
+# To view the data snippet
+kable(head(kiva_mpi_region_locations,3))
+#To get the shape of data
+dim(kiva_mpi_region_locations)
+```
+
+### Multidimensional Poverty Index (MPI) Map
+
+References:
+
+1.  Learning leaflet: <https://geanders.github.io/navy_public_health/4-3-leaflet.html>
+2.  For choosing the layer: <https://leaflet-extras.github.io/leaflet-providers/preview/>
+
+```{r}
+color_scheme <- colorNumeric(
+  palette = colorRampPalette(c('green', 'red'))(length(kiva_mpi_region_locations$MPI)), 
+  domain = kiva_mpi_region_locations$MPI)
+
+regions_no_NA = kiva_mpi_region_locations %>%
+  filter(!is.na(lon)) %>%
+  filter(!is.na(lat))
+
+leaflet(data = regions_no_NA) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng =  ~ lon,
+    lat =  ~ lat,
+    radius = ~ MPI*10,
+    popup =  ~ country,
+    color =  ~ color_scheme(MPI)
+  ) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addLegend("topleft", pal = color_scheme, values = ~MPI,
+          title = "MPI Map",
+           opacity = 1)
+```
+
+### Merge `kiva_mpi_region_locations` with `kiva_loans` data
+
+```{r}
+merged_data <- kiva_loans %>%
+  left_join(kiva_mpi_region_locations, by = c("country" = "country", "region" = "region"))
+
+
+```
+
+### Explore Merged Data
+
+```{r}
+#| label: Merged Data
+# To check the data type of each column
+str(merged_data) 
+# To view the data snippet
+kable(head(merged_data,3))
+dim(merged_data)
+```
+
+### Distribution of Funded Loan Amount By Country
+
+```{r}
+loans_funded_amount = merged_data %>%
+  group_by(world_region) %>%
+  summarise(FundedAmount = sum(funded_amount)) %>%
+  arrange(desc(FundedAmount)) %>%
+  ungroup() %>%
+  mutate(world_region = reorder(world_region,FundedAmount)) %>%
+  
+
+
+treemap(loans_funded_amount, 
+        index="world_region", 
+        vSize = "FundedAmount",  
+        title="Funded Amount", 
+        palette = "RdBu"
+)
+```
+
+### Relation between Loan Amount and Multidimensional Poverty Index
+
+```{r}
+data <- merged_data %>% 
+  filter(!is.na(MPI))
+
+ggplot(data, aes(x = MPI, y = loan_amount)) + 
   geom_point(aes(color = MPI), alpha = 0.5) + 
   scale_color_gradient(low = "yellow", high = "red") + 
   labs(title = "Loan Amount vs. Multidimensional Poverty Index (MPI)", x = "MPI", y = "Loan Amount")
@@ -193,93 +272,78 @@ Conversely, in regions where the MPI is higher, reflecting greater poverty, the 
 
 This pattern suggests that the extent of poverty, as measured by the MPI, may influence the scale of financial assistance provided or sought through loans.
 
-### MPI Map
-
-References:
-
-1.  Learning leaflet: <https://geanders.github.io/navy_public_health/4-3-leaflet.html>
-2.  For choosing the layer: <https://leaflet-extras.github.io/leaflet-providers/preview/>
-
-```{r}
-pal <- colorNumeric(
-  palette = colorRampPalette(c('green', 'red'))(length(merged_data$MPI)), 
-  domain = merged_data$MPI)
-
-regions_no_NA = merged_data %>%
-  filter(!is.na(lon)) %>%
-  filter(!is.na(lat))
-
-center_lon = median(merged_data$lon,na.rm = TRUE)
-center_lat = median(merged_data$lat,na.rm = TRUE)
-
-leaflet(data = regions_no_NA) %>%
-  addTiles() %>%
-  addCircleMarkers(
-    lng =  ~ lon,
-    lat =  ~ lat,
-    radius = ~ MPI*10,
-    popup =  ~ country,
-    color =  ~ pal(MPI)
-  ) %>%
-  # controls
-  #setView(lng=center_lon, lat=center_lat,zoom = 3) %>%
-  addProviderTiles(providers$CartoDB.Positron) %>% 
-  addLegend("topleft", pal = pal, values = ~MPI,
-          title = "MPI Map",
-           opacity = 1)
-```
-
-## Focus Area's for KIVA
+# Kiva's Impact
 
 [Kiva.org](https://www.kaggle.com/kiva) is an online crowd funding platform to extend financial services to poor and financially excluded people around the world. 
 
-So the data of interest for KIVA are countries with high MPI
+So the data of interest for KIVA are countries with high Multidimensional Poverty Index
 
 ```{r}
-mpi_quartiles <- quantile(merged_data$MPI, probs = c(0.75), na.rm = TRUE)
+mpi_quartiles <- quantile(merged_data$MPI, probs = c(0.80), na.rm = TRUE)
 
 # Filter data based on defined criteria
-filtered_data <- merged_data %>%
+high_MPI_data <- merged_data %>%
   filter(MPI >= mpi_quartiles[1])
 ```
 
-```{r}
-filtered_data <- merged_data %>%
-  filter(MPI >= mpi_quartiles) %>%
-  select(country, MPI, loan_amount, activity, sector) %>%
-  distinct()
-```
+## Locations With High MPI
 
 ```{r}
-kiva_opportunities = filtered_data %>%
-  group_by(country) %>%
-  summarise(LoanAmount = sum(loan_amount)) %>%
-  arrange(desc(LoanAmount)) %>%
+high_mpi_region <- high_MPI_data %>%
+  select(region,country,world_region,MPI) %>% 
+  distinct() %>% 
+  arrange(desc(MPI))
+kable(high_mpi_region)
+```
+
+## Total Funded Amount By Kiva to High MPI Locations
+
+```{r}
+summarized_data <- high_MPI_data %>%
+  group_by(LocationName) %>%
+  summarise(TotalFundedAmount = sum(funded_amount)) %>%
   ungroup() %>%
-  mutate(country = reorder(country,LoanAmount))
+  arrange(desc(TotalFundedAmount)) # Arrange in descending order of funded amount
 
+# Plotting
+ggplot(summarized_data, aes(x = reorder(LocationName, TotalFundedAmount), y = TotalFundedAmount)) +
+  geom_bar(stat = "identity", fill = "red") + 
+  theme_minimal() + 
+  coord_flip()+
+  labs(x = "High MPI Locations", y = "Total Funded Amount", title = "Total Funded Amount to High MPI Locations")
 
-treemap(kiva_opportunities, 
-        index="country", 
-        vSize = "LoanAmount",  
-        title="Countries with High MPI", 
-        palette = "RdBu" 
-)
 ```
 
-Kiva.org can use the below table to increase their reach towards countries who need more help.
+## Merge `loan_themes` with `high_MPI_data`
 
 ```{r}
-datatable(filtered_data, options = list(pageLength = 10), filter = 'top', rownames = FALSE)
+high_MPI_data_wt_themes <- high_MPI_data %>% 
+  left_join(loan_themes, by = "id")
 ```
 
-## Quantitative Analysis
+## Top 5 Loan Themes in High MPI Regions
 
-Model to Predict Loan Amount By sector, country & MPI
+```{r}
+high_MPI_data_wt_themes %>% 
+  filter(!is.na(`Loan Theme Type`)) %>% 
+  group_by(`Loan Theme Type`) %>% 
+  summarise(Count = n()) %>% 
+  top_n(5) %>% 
+  ggplot(aes(x = reorder(`Loan Theme Type`, Count), y = Count)) + 
+  geom_bar(stat = "identity", fill = "orange") + 
+  coord_flip() + 
+  labs(title = "Top 5 Loan Themes in High MPI Regions", x = "Loan Theme", y = "Count")
+```
+
+# Quantitative Analysis
+
+Model to Predict Loan Amount By sector, LocationName & MPI
 
 ```{r}
 merged_data$sector <- as.factor(merged_data$sector)
-merged_data$country <- as.factor(merged_data$country)
+merged_data$LocationName <- as.factor(merged_data$LocationName)
+
+merged_data <- merged_data[complete.cases(merged_data),]
 
 # Split data into training and testing sets
 set.seed(123)
@@ -288,7 +352,7 @@ trainData <- merged_data[index, ]
 testData <- merged_data[-index, ]
 
 # Build the linear regression model
-model <- lm(loan_amount ~ sector + MPI + country, data=trainData)
+model <- lm(loan_amount ~ sector + MPI + LocationName, data=trainData)
 
 # Summarize the model
 summary(model)
@@ -301,7 +365,7 @@ MAE <- mean(abs(predictions - testData$loan_amount))
 print(paste("Mean Absolute Error:", MAE))
 ```
 
-A Mean Absolute Error (MAE) of approximately 461.96 suggests that on average, the predictions of our model deviate from the actual values by about 461.96.
+A Mean Absolute Error (MAE) of approximately 422 suggests that on average, the predictions of our model deviate from the actual values by about 422.
 
 ```{r}
 merged_data %>% 
@@ -309,46 +373,8 @@ merged_data %>%
   summary()
 ```
 
-The target variable `loan_amount` ranges between 25 and 50000 where the median is 500, an MAE of 461.96 suggest that the model is not performing well and there is scope for improvement
+The target variable `loan_amount` ranges between 25 and 50000 where the median is 500, an MAE of 422 suggest that the model is not performing well and there is scope for improvement
 
-## KIVA's Reach by Loan Theme
-
-```{r}
-aggregated_data <- merged_data %>%
-  group_by(`Loan Theme Type`) %>%
-  summarise(TotalFundedAmount = sum(funded_amount, na.rm = TRUE)) %>%
-  arrange(desc(TotalFundedAmount))
-print(aggregated_data)
-```
-
-```{r}
-aggregated_data <- aggregated_data %>% 
-  filter(`Loan Theme Type` != "General")
-```
-
-```{r}
-ggplot(head(aggregated_data,10), aes(x = reorder(`Loan Theme Type`, TotalFundedAmount), y = TotalFundedAmount)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  theme_minimal() +
-  labs(title = "Top 10 Loan Theme Types by Funded Amount",
-       x = "Loan Theme Type",
-       y = "Total Funded Amount") +
-  coord_flip()
-```
-
-## Textual Analysis
-
-```{r}
-merged_data %>% 
-  unnest_tokens(word, use) %>% 
-  count(word, sort = TRUE) %>% 
-  top_n(10) %>% 
-  ggplot(aes(x = reorder(word, n), y = n)) + 
-  geom_bar(stat = "identity", fill = "purple1") + 
-  coord_flip() + 
-  labs(title = "Top 10 Most Common Words in Loan Uses", x = "", y = "Frequency")
-```
-
-## References
+# References
 
 Color themes: <https://bookdown.org/hneth/ds4psy/D-3-apx-colors-basics.html>
